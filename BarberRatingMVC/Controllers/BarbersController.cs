@@ -8,16 +8,21 @@ using Microsoft.EntityFrameworkCore;
 using BarberRatingMVC.Data;
 using BarberRatingMVC.Data.Entities;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Hosting;
+using BarberRatingMVC.Utils;
 
 namespace BarberRatingMVC.Controllers
 {
     public class BarbersController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _environment;
 
-        public BarbersController(ApplicationDbContext context)
+
+        public BarbersController(ApplicationDbContext context, IWebHostEnvironment environment)
         {
             _context = context;
+            _environment = environment;
         }
 
         // GET: Barbers
@@ -65,10 +70,16 @@ namespace BarberRatingMVC.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Name,Description,ImageUrl,Id")] Barber barber)
+        public async Task<IActionResult> Create(Barber barber)
         {
             if (ModelState.IsValid)
             {
+                if (barber.Image != null && barber.Image.Length > 0)
+                {
+                    var newFileName = await FileUpload.UploadAsync(barber.Image, _environment.WebRootPath);
+                    barber.ImageUrl = newFileName;
+                }
+
                 _context.Add(barber);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
@@ -99,7 +110,7 @@ namespace BarberRatingMVC.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Name,Description,ImageUrl,Id")] Barber barber)
+        public async Task<IActionResult> Edit(int id, Barber barber)
         {
             if (id != barber.Id)
             {
@@ -108,6 +119,12 @@ namespace BarberRatingMVC.Controllers
 
             if (ModelState.IsValid)
             {
+                if (barber.Image != null && barber.Image.Length > 0)
+                {
+                    var newFileName = await FileUpload.UploadAsync(barber.Image, _environment.WebRootPath);
+                    barber.ImageUrl = newFileName;
+                }
+
                 try
                 {
                     _context.Update(barber);
