@@ -9,6 +9,14 @@
 <p>
     <a asp-action="Create">Create New</a>
 </p>
+
+<form asp-action="Index" method="get">
+    <div class="d-flex col-5 align-content-around flex-nowrap">
+        <input class="form-control col-8 mx-2" type="text" name="search" placeholder="Search" value="@ViewData["Search"]" />
+    <input class="btn btn-primary col-2" type="submit" value="Search" />
+
+    </div>
+</form>
 <table class="table">
     <thead>
         <tr>

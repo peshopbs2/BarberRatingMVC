@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using BarberRatingMVC.Data;
 using BarberRatingMVC.Data.Entities;
+using Microsoft.AspNetCore.Authorization;
 
 namespace BarberRatingMVC.Controllers
 {
@@ -20,9 +21,17 @@ namespace BarberRatingMVC.Controllers
         }
 
         // GET: Barbers
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string search = "")
         {
-            return View(await _context.Barber.ToListAsync());
+            if (string.IsNullOrEmpty(search))
+            {
+                return View(await _context.Barber.ToListAsync());
+            }
+            else
+            {
+                ViewData["Search"] = search;
+                return View(await _context.Barber.Where(b => b.Name.Contains(search)).ToListAsync());
+            }
         }
 
         // GET: Barbers/Details/5
@@ -44,6 +53,7 @@ namespace BarberRatingMVC.Controllers
         }
 
         // GET: Barbers/Create
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             return View();
@@ -52,6 +62,7 @@ namespace BarberRatingMVC.Controllers
         // POST: Barbers/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Name,Description,ImageUrl,Id")] Barber barber)
@@ -66,6 +77,7 @@ namespace BarberRatingMVC.Controllers
         }
 
         // GET: Barbers/Edit/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -84,6 +96,7 @@ namespace BarberRatingMVC.Controllers
         // POST: Barbers/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Name,Description,ImageUrl,Id")] Barber barber)
@@ -117,6 +130,7 @@ namespace BarberRatingMVC.Controllers
         }
 
         // GET: Barbers/Delete/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -135,6 +149,7 @@ namespace BarberRatingMVC.Controllers
         }
 
         // POST: Barbers/Delete/5
+        [Authorize(Roles = "Admin")]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
