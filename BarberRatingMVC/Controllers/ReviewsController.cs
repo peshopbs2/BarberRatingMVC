@@ -7,16 +7,20 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using BarberRatingMVC.Data;
 using BarberRatingMVC.Data.Entities;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 
 namespace BarberRatingMVC.Controllers
 {
     public class ReviewsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<User> _userManager;
 
-        public ReviewsController(ApplicationDbContext context)
+        public ReviewsController(ApplicationDbContext context, UserManager<User> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         // GET: Reviews
@@ -25,7 +29,22 @@ namespace BarberRatingMVC.Controllers
             var applicationDbContext = _context.Review.Include(r => r.Barber).Include(r => r.User);
             return View(await applicationDbContext.ToListAsync());
         }
+        [Authorize]        
+        public async Task<IActionResult> UserReviews()
+        {
+            string userId = _userManager.GetUserId(User);
+            if(string.IsNullOrEmpty(userId))
+            {
+                return NotFound();
+            }
 
+            var applicationDbContext = _context.Review
+                .Where(r => r.UserId == userId)
+                .Include(r => r.Barber)
+                .Include(r => r.User);
+
+            return View(await applicationDbContext.ToListAsync());
+        }
         // GET: Reviews/Details/5
         public async Task<IActionResult> Details(int? id)
         {
@@ -47,10 +66,11 @@ namespace BarberRatingMVC.Controllers
         }
 
         // GET: Reviews/Create
+        [Authorize]
         public IActionResult Create()
         {
-            ViewData["BarberId"] = new SelectList(_context.Barber, "Id", "Description");
-            ViewData["UserId"] = new SelectList(_context.Set<User>(), "Id", "Id");
+            ViewData["BarberId"] = new SelectList(_context.Barber, "Id", "Name");
+            ViewData["UserId"] = _userManager.GetUserId(User);
             return View();
         }
 
@@ -67,8 +87,8 @@ namespace BarberRatingMVC.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["BarberId"] = new SelectList(_context.Barber, "Id", "Description", review.BarberId);
-            ViewData["UserId"] = new SelectList(_context.Set<User>(), "Id", "Id", review.UserId);
+            ViewData["BarberId"] = new SelectList(_context.Barber, "Id", "Name", review.BarberId);
+            ViewData["UserId"] = _userManager.GetUserId(User);
             return View(review);
         }
 
@@ -85,8 +105,8 @@ namespace BarberRatingMVC.Controllers
             {
                 return NotFound();
             }
-            ViewData["BarberId"] = new SelectList(_context.Barber, "Id", "Description", review.BarberId);
-            ViewData["UserId"] = new SelectList(_context.Set<User>(), "Id", "Id", review.UserId);
+            ViewData["BarberId"] = new SelectList(_context.Barber, "Id", "Name", review.BarberId);
+            ViewData["UserId"] = _userManager.GetUserId(User);
             return View(review);
         }
 
@@ -122,8 +142,8 @@ namespace BarberRatingMVC.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["BarberId"] = new SelectList(_context.Barber, "Id", "Description", review.BarberId);
-            ViewData["UserId"] = new SelectList(_context.Set<User>(), "Id", "Id", review.UserId);
+            ViewData["BarberId"] = new SelectList(_context.Barber, "Id", "Name", review.BarberId);
+            ViewData["UserId"] = _userManager.GetUserId(User);
             return View(review);
         }
 
